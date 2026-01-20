@@ -21,9 +21,28 @@ jobs:
         with:
           scan-type: 'fs'
           scan-ref: 'requirements.txt'
-          format: 'table'
+          format: 'json'
+          output: 'trivy-dependencies-report.json'
           exit-code: '0'
           severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Génération du rapport HTML des dépendances
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: 'requirements.txt'
+          format: 'html'
+          output: 'trivy-dependencies-report.html'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Upload du rapport de dépendances
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapport-dependances
+          path: |
+            trivy-dependencies-report.json
+            trivy-dependencies-report.html
 
   Dockerfile:
     runs-on: ubuntu-latest
@@ -53,19 +72,50 @@ jobs:
         run: |
           docker build -t breakableflask:${{ github.sha }} .
 
-      - name: Test Dockerfile avec Trivy
+      - name: Test Dockerfile avec Trivy (JSON)
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'breakableflask:${{ github.sha }}'
-          format: 'table'
+          format: 'json'
+          output: 'trivy-image-report.json'
           exit-code: '0'
           severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Test Dockerfile avec Trivy (HTML)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'breakableflask:${{ github.sha }}'
+          format: 'html'
+          output: 'trivy-image-report.html'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Upload du rapport Docker
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapport-docker
+          path: |
+            trivy-image-report.json
+            trivy-image-report.html
 
   Deploy:
     runs-on: ubuntu-latest
     needs: Dockerfile
     steps:
-      - name: Deploy
+      - name: Téléchargement des rapports
+        uses: actions/download-artifact@v4
+
+      - name: Résumé des rapports disponibles
         run: |
-          echo "✅ Tous les tests de sécurité sont terminés"
-          echo "🚀 Votre application est prête à être déployée"
+          echo "Rapports de sécurité générés :"
+          echo ""
+          echo "1. Rapport des dépendances Python :"
+          echo "   - trivy-dependencies-report.json"
+          echo "   - trivy-dependencies-report.html"
+          echo ""
+          echo "2. Rapport de l'image Docker :"
+          echo "   - trivy-image-report.json"
+          echo "   - trivy-image-report.html"
+          echo ""
+          echo "Tous les tests de sécurité sont terminés"
+          echo ""
