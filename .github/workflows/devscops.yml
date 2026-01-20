@@ -16,7 +16,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Contrôle des dépendances avec Trivy
+      - name: Contrôle des dépendances avec Trivy (JSON)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
@@ -26,13 +26,13 @@ jobs:
           exit-code: '0'
           severity: 'CRITICAL,HIGH,MEDIUM'
 
-      - name: Génération du rapport HTML des dépendances
+      - name: Contrôle des dépendances avec Trivy (Table)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: 'requirements.txt'
-          format: 'html'
-          output: 'trivy-dependencies-report.html'
+          format: 'table'
+          output: 'trivy-dependencies-report.txt'
           exit-code: '0'
           severity: 'CRITICAL,HIGH,MEDIUM'
 
@@ -42,7 +42,7 @@ jobs:
           name: rapport-dependances
           path: |
             trivy-dependencies-report.json
-            trivy-dependencies-report.html
+            trivy-dependencies-report.txt
 
   Dockerfile:
     runs-on: ubuntu-latest
@@ -81,12 +81,12 @@ jobs:
           exit-code: '0'
           severity: 'CRITICAL,HIGH,MEDIUM'
 
-      - name: Test Dockerfile avec Trivy (HTML)
+      - name: Test Dockerfile avec Trivy (Table)
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'breakableflask:${{ github.sha }}'
-          format: 'html'
-          output: 'trivy-image-report.html'
+          format: 'table'
+          output: 'trivy-image-report.txt'
           exit-code: '0'
           severity: 'CRITICAL,HIGH,MEDIUM'
 
@@ -96,7 +96,7 @@ jobs:
           name: rapport-docker
           path: |
             trivy-image-report.json
-            trivy-image-report.html
+            trivy-image-report.txt
 
   Deploy:
     runs-on: ubuntu-latest
@@ -110,12 +110,11 @@ jobs:
           echo "Rapports de sécurité générés :"
           echo ""
           echo "1. Rapport des dépendances Python :"
-          echo "   - trivy-dependencies-report.json"
-          echo "   - trivy-dependencies-report.html"
+          echo "   - trivy-dependencies-report.json (format JSON)"
+          echo "   - trivy-dependencies-report.txt (format tableau)"
           echo ""
           echo "2. Rapport de l'image Docker :"
-          echo "   - trivy-image-report.json"
-          echo "   - trivy-image-report.html"
+          echo "   - trivy-image-report.json (format JSON)"
+          echo "   - trivy-image-report.txt (format tableau)"
           echo ""
-          echo "Tous les tests de sécurité sont terminés"
-          echo ""
+          echo "✅ Tous les tests de sécurité sont terminés"
